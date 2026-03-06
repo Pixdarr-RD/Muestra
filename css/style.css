@@ -1,0 +1,142 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  background: #cfb541;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  overflow-x: hidden;
+
+  max-width: 390px;
+  margin: auto;
+  min-height: 100vh;
+  
+}
+
+/* esto quita el scroll
+body {
+  overflow: hidden;
+}
+  */
+
+.hero video {
+  width: 100%;
+  height: auto;
+  display: block;
+  opacity: 0;            /* empieza invisible */
+  transition: opacity 1.5s ease; /* fade in */
+}
+
+
+
+
+/* LOADER */
+#loader {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: #bb7900;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+  transition: opacity 1.5s ease;
+
+}
+
+#loader img {
+  width: 150px; /* ajusta tamaño del GIF */
+  height: auto;
+  animation: zoom 1.5s ease;
+}
+
+
+@keyframes zoom {
+  from { transform: scale(0.5); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeOut {
+  to { opacity: 0; visibility: hidden; }
+}
+
+/* CONTENIDO */
+.container {
+  padding: 40px 20px;
+  max-width: 400px;
+  margin: auto;
+  background-color: #cfb541;
+   position: relative;  /* 👈 necesario */
+}
+
+@keyframes appear {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.logo {
+  width: 100%;
+
+  
+}
+
+.btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 22px;
+  margin-bottom: 13px;
+  border-radius: 18px;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 16px;
+  transition: 0.3s;
+  transform: scale(1);
+}
+
+.btn i {
+  font-size: 20px;
+}
+
+.btn:hover {
+  transform: scale(1.05);
+}
+
+
+/* COLORES */
+.red { background: #bb7900; color: white; }
+.pink { background: #bb7900; color: white;}
+.gray { background: #bb7900; color: rgb(255, 255, 255); }
+.blue { background: #bb7900; color: white;}
+.green { background: #bb7900; color: white; }
+.wifi { background: #bb7900; color: rgb(255, 255, 255); }
+.juego { background: #bb7900; color: rgb(255, 255, 255); }
+
+
+.watermark {
+  position: absolute;   /* 👈 cambia esto */
+  bottom: 15px;
+  right: 20px;
+  font-size: 12px;
+  font-family: sans-serif;
+  color: rgb(255, 255, 255);
+  text-decoration: none;
+  z-index: 9999;
+  transition: 0.3s ease;
+}
+
+.watermark strong {
+  font-weight: 600;
+}
+
+.watermark:hover {
+  color: #ff0000;
+  transform: scale(1.05);
+}

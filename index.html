@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <!-- Icono / Favicon-->
+  <link rel="icon" type="image/png" href="./img/icono.png">
+   <!-- Fin Icono / Favicon-->
+
+  <title>Mosquitisol</title>
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body>
+
+  <!-- LOADER -->
+  <div id="loader">
+    <img src="./img/loader.png" alt="Cargando..." />
+  </div>
+
+<div class="hero">
+  <video id="heroVideo" autoplay muted playsinline preload="auto" poster="./img/card.jpg">
+    <source src="./img/animacion.mp4" type="video/mp4">
+  </video>
+</div>
+
+
+<div class="container">
+   
+  <a href="./comidas/comida.html" class="btn red">
+  <span>COMIDA</span>
+  <i class="fas fa-bars"></i>
+</a>
+
+<a href="./bebidas/bebidas.html" class="btn blue">
+  <span>BEBIDAS</span>
+  <i class="fas fa-bars"></i>
+</a>
+
+<a href="#" rel="noopener noreferrer" class="btn pink">
+  <span>Instagram</span>
+  <i class="fab fa-instagram"></i>
+</a>
+
+<a href="#" class="btn gray">
+  <span>Tiktok</span>
+  <i class="fab fa-tiktok"></i>
+</a>
+
+
+<a href="https://wa.me/829..." class="btn green">
+  <span>WhatsApp</span>
+  <i class="fab fa-whatsapp"></i>
+</a>
+
+<a href="#" class="btn wifi" id="wifiBtn">
+  <span id="wifiText">Contraseña WIFI</span>
+  <i class="fa-solid fa-wifi"></i>
+</a>
+
+<a href="./damas.html" class="btn juego">
+  <span>Jugar Tablero</span>
+   <i class="fa-solid fa-gamepad"></i>
+</a>
+
+<a href="https://www.instagram.com/pixdarrx/" target="_blank" class="watermark">
+  Creado por <strong>PIXDARR</strong>
+</a>
+</div>
+
+
+<script src="script.js"></script>
+<script>
+  const wifiBtn = document.getElementById("wifiBtn");
+  const wifiText = document.getElementById("wifiText");
+
+  const password = "Mosquitisol2026"; // 👈 cambia aquí tu contraseña
+
+  wifiBtn.addEventListener("click", function(e) {
+    e.preventDefault();
+
+    navigator.clipboard.writeText(password);
+
+    wifiText.textContent = "Copiada ✅";
+
+    setTimeout(() => {
+      wifiText.textContent = "Contraseña WIFI";
+    }, 2000);
+  });
+</script>
+</body>
+</html>
+
+
+

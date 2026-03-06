@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Damas Pixdarr</title>
+
+<style>
+body{
+    margin:0;
+    background:#111;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    font-family:Arial;
+    padding:10px;
+    box-sizing:border-box;
+}
+
+/* 🔥 Tablero adaptable */
+.board{
+    display:grid;
+    width:95vw;               /* ocupa casi todo el ancho del móvil */
+    max-width:520px;          /* límite en PC */
+    aspect-ratio:1/1;         /* siempre cuadrado */
+    grid-template-columns:repeat(8,1fr);
+    grid-template-rows:repeat(8,1fr);
+}
+
+/* Celdas ahora son proporcionales */
+.cell{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.dark{background:#000000;}
+.light{background:#ccc;}
+
+/* 🔥 Piezas adaptables */
+.piece{
+    width:75%;
+    height:75%;
+    border-radius:50%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:clamp(16px, 4vw, 26px);
+    cursor:pointer;
+}
+
+.white{background:#f5f5f5;color:black;}
+.black{background:#ffbb00;color:white;}
+.selected{outline:4px solid #00ffcc;}
+
+.overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.85);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    color:white;
+    font-size:clamp(18px,5vw,28px);
+    visibility:hidden;
+    text-align:center;
+    padding:20px;
+}
+
+.overlay button{
+    margin-top:20px;
+    padding:12px 25px;
+    font-size:16px;
+    border:none;
+    background:#00ffcc;
+    cursor:pointer;
+    border-radius:8px;
+}
+
+/* Barra superior */
+.top-bar{
+  width:100%;
+  max-width:520px;
+  text-align:left;
+}
+
+.btn-volver {
+  display: inline-block;
+  padding: 8px 18px;
+  margin-bottom: 15px;
+  background: #ff6600;
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 600;
+  border-radius: 30px;
+  transition: all 0.3s ease;
+}
+
+.btn-volver:hover {
+  background: firebrick;
+}
+</style>
+
+</head>
+<body>
+     <div class="top-bar">
+  <a href="./index.html" class="btn-volver">← Volver</a>
+</div>
+
+<div id="board" class="board"></div>
+
+<div id="overlay" class="overlay">
+    <div id="resultText"></div>
+    <button onclick="init()">Jugar otra vez</button>
+</div>
+
+<script>
+
+const boardEl=document.getElementById("board");
+const overlay=document.getElementById("overlay");
+const resultText=document.getElementById("resultText");
+
+let board=[];
+let selected=null;
+let turn="white";
+
+function init(){
+    overlay.style.visibility="hidden";
+    board=[];
+    boardEl.innerHTML="";
+    turn="white";
+
+    for(let r=0;r<8;r++){
+        board[r]=[];
+        for(let c=0;c<8;c++){
+            let cell=document.createElement("div");
+            cell.classList.add("cell",(r+c)%2?"dark":"light");
+            cell.onclick=()=>cellClick(r,c);
+            boardEl.appendChild(cell);
+
+            if((r+c)%2 && r<3) board[r][c]={color:"black",king:false};
+            else if((r+c)%2 && r>4) board[r][c]={color:"white",king:false};
+            else board[r][c]=null;
+        }
+    }
+    draw();
+}
+
+function draw(){
+    document.querySelectorAll(".cell").forEach((cell,i)=>{
+        let r=Math.floor(i/8);
+        let c=i%8;
+        cell.innerHTML="";
+        let piece=board[r][c];
+        if(piece){
+            let el=document.createElement("div");
+            el.classList.add("piece",piece.color);
+            if(selected && selected.r==r && selected.c==c)
+                el.classList.add("selected");
+
+            if(piece.king) el.innerHTML="👑";
+
+            cell.appendChild(el);
+        }
+    });
+}
+
+function showWinner(text){
+    resultText.innerText=text;
+    overlay.style.visibility="visible";
+}
+
+function cellClick(r,c){
+    if(turn!=="white") return;
+
+    let piece=board[r][c];
+
+    if(piece && piece.color==="white"){
+        selected={r,c};
+        draw();
+        return;
+    }
+
+    if(selected){
+        let moves=getLegalMoves("white");
+        let move=moves.find(m=>m.from.r===selected.r && m.from.c===selected.c && m.to.r===r && m.to.c===c);
+        if(move){
+            applyMove(move,board);
+            selected=null;
+            draw();
+            if(checkWinner()) return;
+            turn="black";
+            setTimeout(aiMove,300);
+        }
+    }
+}
+
+function cloneBoard(b){
+    return b.map(row=>row.map(cell=>cell?{...cell}:null));
+}
+
+function getLegalMoves(color,b=board){
+    let captures=[];
+    let normals=[];
+
+    for(let r=0;r<8;r++){
+        for(let c=0;c<8;c++){
+            let p=b[r][c];
+            if(p && p.color===color){
+                let caps=getCaptureSequences(r,c,b);
+                if(caps.length) captures.push(...caps);
+                else normals.push(...getNormalMoves(r,c,b));
+            }
+        }
+    }
+
+    if(captures.length){
+        let max=Math.max(...captures.map(m=>m.captures.length));
+        return captures.filter(m=>m.captures.length===max);
+    }
+
+    return normals;
+}
+
+function getCaptureSequences(r,c,b){
+    let piece=b[r][c];
+    let sequences=[];
+    let dirs=[[1,1],[1,-1],[-1,1],[-1,-1]];
+
+    function recurse(cr,cc,boardState,captured){
+        let found=false;
+
+        for(let d of dirs){
+            let nr=cr+d[0];
+            let nc=cc+d[1];
+
+            while(piece.king && nr>=0&&nr<8&&nc>=0&&nc<8 && !boardState[nr][nc]){
+                nr+=d[0];
+                nc+=d[1];
+            }
+
+            if(nr>=0&&nr<8&&nc>=0&&nc<8){
+                if(boardState[nr][nc] && boardState[nr][nc].color!==piece.color){
+                    let jr=nr+d[0];
+                    let jc=nc+d[1];
+
+                    while(jr>=0&&jr<8&&jc>=0&&jc<8 && !boardState[jr][jc]){
+                        let newBoard=cloneBoard(boardState);
+                        newBoard[jr][jc]=newBoard[cr][cc];
+                        newBoard[cr][cc]=null;
+                        newBoard[nr][nc]=null;
+
+                        recurse(jr,jc,newBoard,[...captured,{r:nr,c:nc}]);
+                        found=true;
+
+                        if(!piece.king) break;
+                        jr+=d[0];
+                        jc+=d[1];
+                    }
+                }
+            }
+        }
+
+        if(!found && captured.length){
+            sequences.push({
+                from:{r,c},
+                to:{r:cr,c:cc},
+                captures:captured
+            });
+        }
+    }
+
+    recurse(r,c,b,[]);
+    return sequences;
+}
+
+function getNormalMoves(r,c,b){
+    let piece=b[r][c];
+    let moves=[];
+    let dirs=[[1,1],[1,-1],[-1,1],[-1,-1]];
+
+    for(let d of dirs){
+        let nr=r+d[0];
+        let nc=c+d[1];
+
+        while(nr>=0&&nr<8&&nc>=0&&nc<8 && !b[nr][nc]){
+            if(!piece.king){
+                if(piece.color==="white" && d[0]!==-1) break;
+                if(piece.color==="black" && d[0]!==1) break;
+            }
+
+            moves.push({from:{r,c},to:{r:nr,c:nc},captures:[]});
+
+            if(!piece.king) break;
+            nr+=d[0];
+            nc+=d[1];
+        }
+    }
+    return moves;
+}
+
+function applyMove(move,b){
+    let piece=b[move.from.r][move.from.c];
+    b[move.from.r][move.from.c]=null;
+    b[move.to.r][move.to.c]=piece;
+
+    move.captures.forEach(c=>b[c.r][c.c]=null);
+
+    if(piece.color==="white" && move.to.r===0) piece.king=true;
+    if(piece.color==="black" && move.to.r===7) piece.king=true;
+}
+
+function evaluate(b){
+    let score=0;
+    for(let r=0;r<8;r++){
+        for(let c=0;c<8;c++){
+            let p=b[r][c];
+            if(p){
+                let val=p.king?3:1;
+                score+=p.color==="black"?val:-val;
+            }
+        }
+    }
+    return score;
+}
+
+function minimax(b,depth,maximizing){
+    if(depth===0) return evaluate(b);
+
+    let color=maximizing?"black":"white";
+    let moves=getLegalMoves(color,b);
+    if(!moves.length) return evaluate(b);
+
+    if(maximizing){
+        let max=-9999;
+        for(let m of moves){
+            let newB=cloneBoard(b);
+            applyMove(m,newB);
+            max=Math.max(max,minimax(newB,depth-1,false));
+        }
+        return max;
+    }else{
+        let min=9999;
+        for(let m of moves){
+            let newB=cloneBoard(b);
+            applyMove(m,newB);
+            min=Math.min(min,minimax(newB,depth-1,true));
+        }
+        return min;
+    }
+}
+
+function aiMove(){
+    let moves=getLegalMoves("black");
+    if(!moves.length){ showWinner("🏆 ¡Ganaste!"); return; }
+
+    let bestScore=-9999;
+    let bestMove=null;
+
+    for(let m of moves){
+        let newB=cloneBoard(board);
+        applyMove(m,newB);
+        let score=minimax(newB,4,false);
+        if(score>bestScore){
+            bestScore=score;
+            bestMove=m;
+        }
+    }
+
+    applyMove(bestMove,board);
+    draw();
+
+    if(checkWinner()) return;
+    turn="white";
+}
+
+function checkWinner(){
+    if(!getLegalMoves("white").length){
+        showWinner("💻 La IA gana");
+        return true;
+    }
+    if(!getLegalMoves("black").length){
+        showWinner("🏆 ¡Ganaste!");
+        return true;
+    }
+    return false;
+}
+
+init();
+
+</script>
+</body>
+</html>
